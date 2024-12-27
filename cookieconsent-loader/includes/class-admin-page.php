@@ -116,13 +116,13 @@ class CCLOAD_Admin_Page {
         wp_enqueue_script('codemirror-mode-css', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/css/css.js', ['codemirror-js'], null, true);
         wp_enqueue_script('codemirror-mode-js', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/javascript/javascript.js', ['codemirror-js'], null, true);
 
-        // Codemirror 5 linting
+        // Codemirror 5 linting - disable CSS linting for now
         wp_enqueue_style('codemirror-lint-css', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/addon/lint/lint.css', [], null);
         wp_enqueue_script('codemirror-lint-js', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/addon/lint/lint.js', ['codemirror-js'], null, true);
         wp_enqueue_script('jshint', 'https://cdn.jsdelivr.net/npm/jshint@2.13.6/dist/jshint.js', [], null, true);
         wp_enqueue_script('codemirror-js-lint', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/addon/lint/javascript-lint.js', ['codemirror-mode-js', 'codemirror-lint-js', 'jshint'], null, true);
-        wp_enqueue_script('csslint', 'https://cdn.jsdelivr.net/npm/csslint@1.0.5/dist/csslint.js', [], null, true);
-        wp_enqueue_script('codemirror-css-lint', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/addon/lint/css-lint.js', ['codemirror-mode-css', 'codemirror-lint-js', 'csslint'], null, true);
+        //wp_enqueue_script('csslint', 'https://cdn.jsdelivr.net/npm/csslint@1.0.5/dist/csslint.js', [], null, true);
+        //wp_enqueue_script('codemirror-css-lint', 'https://cdn.jsdelivr.net/npm/codemirror@5.65.18/addon/lint/css-lint.js', ['codemirror-mode-css', 'codemirror-lint-js', 'csslint'], null, true);
         
         wp_add_inline_script('codemirror-js', $this->get_inline_editor_init_js());
     }
@@ -139,8 +139,7 @@ class CCLOAD_Admin_Page {
             var cssEditor = CodeMirror.fromTextArea(document.getElementById('ccload_custom_css'), {
                 lineNumbers: true,
                 mode: 'css',
-                gutters: ['CodeMirror-lint-markers'],
-                lint: true
+                gutters: ['CodeMirror-lint-markers']
             });
         });
         ";
