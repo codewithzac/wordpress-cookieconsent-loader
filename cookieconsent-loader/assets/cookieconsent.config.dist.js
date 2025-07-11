@@ -1,4 +1,6 @@
-CookieConsent.run({
+// CookieConsent configuration object
+// Configuration reference: https://cookieconsent.orestbida.com/reference/configuration-reference.html
+let ccConfig = {
 
   autoShow: true,
   disablePageInteraction: true,
@@ -75,8 +77,8 @@ CookieConsent.run({
     }
   },
 
-  // Trigger GTM dataLayer events when updating consent
-  // These are optional, but required if using the "GTM Consent for CookieConsent" GTM template
+  // Trigger GTM dataLayer and WP Consent API events when updating consent
+  // These are optional, but required if using the "GTM Consent for CookieConsent" GTM template or WP Consent API integration
   onFirstConsent: function(detail) {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
@@ -84,6 +86,7 @@ CookieConsent.run({
       consentCategories: detail.cookie.categories,
       consentServices: detail.cookie.services
     });
+    updateWPConsent(detail);
   },
   onChange: function(detail) {
     window.dataLayer = window.dataLayer || [];
@@ -92,6 +95,27 @@ CookieConsent.run({
       consentCategories: detail.cookie.categories,
       consentServices: detail.cookie.services
     });
+    updateWPConsent(detail);
+  }
+};
+
+// Helper function to update WP Consent API
+function updateWPConsent(detail) {
+  if (typeof wp_set_consent !== 'function' || typeof ccload_consent_api_mapping === 'undefined') {
+    return;
   }
 
-});
+  for (const ccCategory in ccload_consent_api_mapping) {
+    const wpCategory = ccload_consent_api_mapping[ccCategory];
+    if (wpCategory) {
+      const consent = detail.cookie.categories.includes(ccCategory) ? 'allow' : 'deny';
+      wp_set_consent(wpCategory, consent);
+    }
+  }
+}
+
+// [Optional] load custom CSS
+// document.body.classList.add('cc--custom');
+
+// Load CookieConsent
+CookieConsent.run(ccConfig);
