@@ -41,7 +41,15 @@ class CCLOAD_Admin_Page {
             'default' => [
                 'mode' => 'all',
                 'roles' => []
-            ]            
+            ]
+        ]);
+
+
+        // Register a setting for the WP Consent API mapping
+        register_setting('ccload_options_group', 'ccload_wp_consent_api_mapping', [
+            'type' => 'array',
+            'sanitize_callback' => null, // No sanitization needed for this array
+            'default' => []
         ]);
 
         add_settings_section(
@@ -60,6 +68,7 @@ class CCLOAD_Admin_Page {
             'ccload-admin',
             'ccload_display_section'
         );
+
     }
 
     public function sanitize_roles_setting($input) {
@@ -105,6 +114,7 @@ class CCLOAD_Admin_Page {
         <?php
     }
 
+
     public function enqueue_admin_assets($hook) {
         if ($hook !== 'settings_page_ccload-admin') {
             return;
@@ -128,6 +138,12 @@ class CCLOAD_Admin_Page {
     }
 
     protected function get_inline_editor_init_js() {
+        $current_mapping = get_option('ccload_wp_consent_api_mapping', []);
+        $wp_api_categories = (new CCLOAD_WP_Consent_API())->get_wp_consent_api_categories();
+
+        $json_current_mapping = json_encode($current_mapping);
+        $json_wp_api_categories = json_encode($wp_api_categories);
+
         return "
         jQuery(document).ready(function($){
             var jsEditor = CodeMirror.fromTextArea(document.getElementById('ccload_config_js'), {
@@ -141,6 +157,65 @@ class CCLOAD_Admin_Page {
                 mode: 'css',
                 gutters: ['CodeMirror-lint-markers']
             });
+
+            // WP Consent API Mapping Logic
+            function updateConsentMappingTable() {
+                var configJs = jsEditor.getValue();
+                var categories = [];
+                try {
+                    // A safer way to extract the object
+                    var startIndex = configJs.indexOf('categories: {');
+                    if (startIndex === -1) throw new Error('Categories not found');
+                    
+                    var openBraces = 1;
+                    var endIndex = -1;
+                    for (var i = startIndex + 14; i < configJs.length; i++) {
+                        if (configJs[i] === '{') openBraces++;
+                        if (configJs[i] === '}') openBraces--;
+                        if (openBraces === 0) {
+                            endIndex = i;
+                            break;
+                        }
+                    }
+                    if (endIndex === -1) throw new Error('Could not find closing brace for categories');
+
+                    var catStr = configJs.substring(startIndex + 12, endIndex + 1);
+                    var configCategories = eval('(' + catStr + ')');
+
+                    if (typeof configCategories === 'object') {
+                        for (var key in configCategories) {
+                            if (!configCategories[key].readOnly) {
+                                categories.push(key);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing CookieConsent config:', e);
+                }
+
+                var tableBody = $('#ccload-consent-api-mapping-table tbody');
+                tableBody.empty();
+                if (categories.length > 0) {
+                    var currentMapping = {$json_current_mapping};
+                    var wpApiCategories = {$json_wp_api_categories};
+
+                    categories.forEach(function(cat) {
+                        var row = '<tr><th>' + cat + '</th><td><select name=\"ccload_wp_consent_api_mapping[' + cat + ']\">';
+                        row += '<option value=\"\">' + 'Do not map' + '</option>';
+                        for (var wpCat in wpApiCategories) {
+                            var selected = (currentMapping[cat] === wpCat) ? ' selected' : '';
+                            row += '<option value=\"' + wpCat + '\"' + selected + '>' + wpApiCategories[wpCat] + '</option>';
+                        }
+                        row += '</select></td></tr>';
+                        tableBody.append(row);
+                    });
+                } else {
+                    tableBody.append('<tr><td colspan=\"2\">No categories found in Configuration JS or the configuration is invalid.</td></tr>');
+                }
+            }
+
+            jsEditor.on('change', updateConsentMappingTable);
+            updateConsentMappingTable(); // Initial population
         });
         ";
     }
@@ -199,6 +274,7 @@ class CCLOAD_Admin_Page {
 
             <hr>
             <h2>Select a Version to Update</h2>
+            <p class="description">Select a release and click "Update to Selected Release" to download JS and CSS files for that version.</p>
             <form method="post">
                 <?php wp_nonce_field('ccload_update_version','ccload_update_nonce'); ?>
                 <table class="form-table">
@@ -217,7 +293,6 @@ class CCLOAD_Admin_Page {
                                 }
                                 ?>
                             </select>
-                            <p class="description">Select a release and click "Update to Selected Release" to download JS and CSS files for that version.</p>
                         </td>
                     </tr>
                 </table>
@@ -243,6 +318,32 @@ class CCLOAD_Admin_Page {
                 <textarea id="ccload_custom_css" name="ccload_custom_css" style="width:100%; height:300px;"><?php echo esc_textarea($custom_css); ?></textarea>
 
                 <p><input type="submit" class="button button-primary" value="Save Files"></p>
+            </form>
+
+            <hr>
+            <form method="post" action="options.php">
+                <?php settings_fields('ccload_options_group'); ?>
+                <h2>WP Consent API Integration</h2>
+                <p class="description">Map the categories from your Configuration JS to the standard WP Consent API categories. Categories with the 'readOnly' flag will be ignored.</p>
+                <?php
+                $consent_api = new CCLOAD_WP_Consent_API();
+                $config_path = CCLOAD_ASSETS_DIR . 'cookieconsent.config.js';
+                $config_exists = file_exists($config_path);
+
+                if (!$consent_api->is_wp_consent_api_active()) {
+                    echo '<p style="color:red;">WP Consent API is not active. Please install and activate the <a href="https://wordpress.org/plugins/wp-consent-api/" target="_blank">WP Consent API plugin</a> to use this feature.</p>';
+                } elseif (!$config_exists) {
+                    echo '<p style="color:red;">The <code>cookieconsent.config.js</code> file does not exist. Please save the Configuration JS file above to create it.</p>';
+                } else {
+                    echo '<p style="color:green;">WP Consent API is installed and active.</p>';
+                }
+                ?>
+                <table id="ccload-consent-api-mapping-table" class="form-table">
+                    <tbody>
+                        <!-- Rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+                <?php submit_button('Save WP Consent API Mapping'); ?>
             </form>
         </div>
         <?php
@@ -280,8 +381,14 @@ class CCLOAD_Admin_Page {
                     $css_editor->save_contents(wp_unslash($_POST['ccload_custom_css']));
                 }
 
+                // Save the consent API mapping
+                if (isset($_POST['ccload_wp_consent_api_mapping']) && is_array($_POST['ccload_wp_consent_api_mapping'])) {
+                    $mapping = array_map('sanitize_text_field', $_POST['ccload_wp_consent_api_mapping']);
+                    update_option('ccload_wp_consent_api_mapping', $mapping);
+                }
+
                 add_action('admin_notices', function(){
-                    echo '<div class="notice notice-success is-dismissible"><p>Files saved successfully.</p></div>';
+                    echo '<div class="notice notice-success is-dismissible"><p>Files and settings saved successfully.</p></div>';
                 });
             }
         }
