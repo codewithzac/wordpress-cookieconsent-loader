@@ -27,6 +27,17 @@ class CCLOAD_Assets {
         if ( file_exists(CCLOAD_ASSETS_DIR . 'cookieconsent.custom.css') && filesize(CCLOAD_ASSETS_DIR . 'cookieconsent.custom.css') > 10 ) {
             wp_enqueue_style('ccload-custom-css', CCLOAD_ASSETS_URL . 'cookieconsent.custom.css', ['ccload-cookieconsent-css'], null);
         }
+
+        // Pass consent categories to the frontend
+        $wp_consent_api = new CCLOAD_WP_Consent_API();
+        if ($wp_consent_api->is_wp_consent_api_active()) {
+            wp_localize_script(
+                'ccload-cookieconsent-config',
+                'ccload_consent_api_mapping',
+                $wp_consent_api->get_category_mapping()
+            );
+        }
+
     }
 
     protected function should_load_for_current_user() {
