@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: CookieConsent Loader
- * Description: A Wordpress plugin to load <a href="https://cookieconsent.orestbida.com/" target="_blank">CookieConsent by Orest Bida</a>. Syncs the main JS and CSS files from GitHub, and provides editors for the configuration JS and optional custom CSS files.
- * Version: 0.1.0
+ * Description: A Wordpress plugin to load <a href="https://cookieconsent.orestbida.com/" target="_blank">CookieConsent by Orest Bida</a>. Syncs the main JS and CSS files from GitHub, and provides editors for the configuration JS and optional custom CSS files. Integrates with the <a href="https://wpconsentapi.org/" target="_blank">WP Consent API</a>.
+ * Version: 0.2.0
  * Author: <a href="https://github.com/codewithzac" target="_blank">codewithzac</a>
  */
 
@@ -25,6 +25,7 @@ if ( ! file_exists( CCLOAD_ASSETS_DIR ) ) {
 require_once CCLOAD_PLUGIN_DIR . 'includes/class-github-updater.php';
 require_once CCLOAD_PLUGIN_DIR . 'includes/class-assets.php';
 require_once CCLOAD_PLUGIN_DIR . 'includes/class-file-editor.php';
+require_once CCLOAD_PLUGIN_DIR . 'includes/class-wp-consent-api.php';
 require_once CCLOAD_PLUGIN_DIR . 'includes/class-admin-page.php';
 
 // Initialize classes
@@ -41,6 +42,9 @@ add_action( 'plugins_loaded', function() {
 
     $admin_page = new CCLOAD_Admin_Page();
     $admin_page->init();
+
+    $wp_consent_api = new CCLOAD_WP_Consent_API();
+    $wp_consent_api->init();
 });
 
 // Show an admin notice if JS and CSS haven't been downloaded yet.
