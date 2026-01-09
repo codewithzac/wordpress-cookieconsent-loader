@@ -18,10 +18,11 @@ class CCLOAD_GitHub_Updater {
     public function get_all_releases() {
         // Try caching
         $cached = get_transient('ccload_github_releases');
-        if ( $cached ) {
+        if ( $cached !== false ) {
             return $cached;
         }
 
+        // Get releases from GitHub
         $response = wp_remote_get($this->repo_url . '/releases', [
             'timeout' => 10,
             'headers' => ['Accept' => 'application/vnd.github.v3+json']
@@ -31,10 +32,15 @@ class CCLOAD_GitHub_Updater {
             return [];
         }
 
-        $data = json_decode( wp_remote_retrieve_body($response), true );
-        if (!is_array($data)) {
-            return [];
-        }
+        $code = wp_remote_retrieve_response_code($response);
+		$body = wp_remote_retrieve_body($response);
+		
+		if ( $code !== 200 ) {
+			error_log("CCLOAD GitHub release check failed: HTTP $code: $body");
+			return [];
+		}
+		
+		$data = json_decode( $body, true );
 
         // Filter out any releases starting with "v2"
         $filtered = [];
