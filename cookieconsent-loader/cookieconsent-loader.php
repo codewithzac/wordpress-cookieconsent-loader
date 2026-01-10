@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CookieConsent Loader
  * Description: A Wordpress plugin to load <a href="https://cookieconsent.orestbida.com/" target="_blank">CookieConsent by Orest Bida</a>. Syncs the main JS and CSS files from GitHub, and provides editors for the configuration JS and optional custom CSS files. Integrates with the <a href="https://wpconsentapi.org/" target="_blank">WP Consent API</a>.
- * Version: 0.2.0
+ * Version: 0.3.1
  * Author: <a href="https://github.com/codewithzac" target="_blank">codewithzac</a>
  */
 
