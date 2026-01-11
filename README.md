@@ -5,17 +5,17 @@ A Wordpress plugin to load CookieConsent by Orest Bida.
 This plugin is designed to make it very easy to integrate [CookieConsent by Orest Bida](https://cookieconsent.orestbida.com/) into a Wordpress website.
 
 ## Download Plugin ZIP
-Either:
-- Click the **<> Code** button above, select **Download ZIP**, or
-- Go to the latest release in **Releases** on the right, then download the latest **Source code (zip)**
-
-Extract the ZIP file, then find the `cookieconsent-loader.zip` file within for installing the plugin.
+- Click the **cookieconsent-loader.zip** file above, or navigate to [cookieconsent-loader.zip](https://github.com/codewithzac/wordpress-cookieconsent-loader/blob/main/cookieconsent-loader.zip)
+- Click the download button at the top-right (next to the pencil icon)
 
 ## Installation
 1. Go to your Wordpress site, log in as Admin
 2. Go to the **Plugins** > **Add New Plugin** section
 3. Click the **Upload Plugin** button
 4. Select the `cookieconsent-loader.zip` file per above
+
+> [!CAUTION]
+> If you are using this process to upgrade from an earlier version, you need to make a copy of your configuration files and take note of your settings _before_ you upgrade! The upgrade process resets your configuration to defaults.
 
 ## Configuration
 There are three steps to configure the plugin. In Wordpress Admin, go to **Settings** > **CookieConsent**, then..:
